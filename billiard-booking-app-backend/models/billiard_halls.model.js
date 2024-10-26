@@ -1,18 +1,20 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
 
 const billiardHallSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
   },
-  longitude: {
-    type: Number,
-    required: true,
-  },
-  latitude: {
-    type: Number,
-    required: true,
+  location: {
+    type: {
+      type: String,
+      enum: ["Point"],
+      required: true,
+    },
+    coordinates: {
+      type: [Number],
+      required: true,
+    },
   },
   rating: {
     type: Number,
@@ -43,24 +45,35 @@ const billiardHallSchema = new mongoose.Schema({
     required: true,
   },
   popular: {
-    type: Number, // Thêm trường popular
+    type: Number,
     required: true,
     min: 1,
     max: 100,
   },
   type_halls: {
-    type: String, // Thêm trường type_halls
+    type: String,
     required: true,
-    enum: ["pool", "3c", "custom", "snooker", "English Billiards", "Carom", "Russian Pyramid"]
+    enum: [
+      "pool",
+      "3c",
+      "custom",
+      "snooker",
+      "English Billiards",
+      "Carom",
+      "Russian Pyramid",
+    ],
   },
-  createdDate: {
+  created_at: {
     type: Date,
     default: Date.now,
   },
-  updatedDate: {
+  updated_at: {
     type: Date,
     default: Date.now,
   },
 });
+
+// Create a 2dsphere index to support geospatial queries
+billiardHallSchema.index({ location: "2dsphere" });
 
 module.exports = mongoose.model("billiard_halls", billiardHallSchema);

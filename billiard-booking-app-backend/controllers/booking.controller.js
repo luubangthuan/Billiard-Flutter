@@ -1,114 +1,140 @@
 const Booking = require("../models/booking.model");
-const UserModel = require("../models/user.model");
-const UserServices = require("../services/user.service");
-const userController = require("./user.controller");
 
-const bookingController = {
-  getBookingByID: async (req, res) => {
-    try {
-      const bookingRes = await Booking.findById(req.params.id).populate({
-        path: "userID",
-        model: UserModel.modelName,
-        select: "fullname phone role",
-      });
-
-      const formattedBooking = {
-        _id: bookingRes._id,
-        userInfor: {
-          fullname: bookingRes.userID.fullname,
-          phone: bookingRes.userID.phone,
-          role: bookingRes.userID.role,
-        },
-        arrivalTime: bookingRes.arrivalTime,
-        createdDate: bookingRes.createdDate,
-      };
-
-      res.status(200).json({ data: formattedBooking });
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
-    }
-  },
-
+const bookingsController = {
+  // Lấy tất cả các booking
   getAllBookings: async (req, res) => {
     try {
-      const bookings = await Booking.find().populate({
-        path: "userID",
-        model: UserModel.modelName,
-        select: "fullname phone role",
-      });
-
-      const formattedBookings = bookings.map((booking) => {
-        return {
-          _id: booking._id,
-          userInfor: {
-            fullname: booking.userID.fullname,
-            phone: booking.userID.phone,
-            role: booking.userID.role,
-          },
-          arrivalTime: booking.arrivalTime,
-          createdDate: booking.createdDate,
-          __v: booking.__v,
-        };
-      });
-
-      res.status(200).json({ data: formattedBookings });
+      const bookings = await Booking.find().populate("hallInfo.hall_id");
+      res.status(200).json({ data: bookings });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   },
 
+  // Lấy booking theo ID
+  getBookingByID: async (req, res) => {
+    try {
+      const booking = await Booking.findById(req.params.id).populate(
+        "hallInfo.hall_id"
+      );
+      if (!booking) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+      res.status(200).json({ data: booking });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  // Lấy booking theo số điện thoại
+  getBookingByPhone: async (req, res) => {
+    try {
+      const { phone } = req.params;
+  
+      const bookings = await Booking.find({
+        "personInfo.phone": phone,
+      }).populate({
+        path: 'hallInfo.hall_id',
+        select: '-services'
+      });;
+  
+      if (!bookings || bookings.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "No bookings found for this phone number" });
+      }
+  
+      res.status(200).json({ data: bookings });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  // Thêm mới booking
   addBooking: async (req, res) => {
     try {
-      const { phone, fullname, arrivalTime } = req.body;
-      let newBooking, savedBooking;
+      const { personInfo, bookingInfo, hallInfo, totalPayment } = req.body;
 
-      // Kiểm tra xem số điện thoại đã tồn tại trong hệ thống hay chưa
-      const existingUser = await UserServices.getUserByPhone(phone);
-
-      // Dữ liệu để lưu
-      const savedData = { arrivalTime };
-
-      if (existingUser) {
-        // Nếu số điện thoại đã tồn tại, sử dụng _id của người dùng hiện có để tạo đơn đặt bàn
-        savedData.userID = existingUser._id;
-      } else {
-        // Nếu số điện thoại chưa tồn tại, tạo một tài khoản mới dựa trên số điện thoại
-        const newClient = await UserServices.createNewTempClient(
-          fullname,
-          phone
-        );
-        savedData.userID = newClient._id;
+      if (
+        !personInfo ||
+        !bookingInfo ||
+        !hallInfo ||
+        totalPayment === undefined
+      ) {
+        return res.status(400).json({ message: "All fields are required" });
       }
 
-      // Tạo đơn đặt bàn
-      newBooking = new Booking(savedData);
-      savedBooking = await newBooking.save();
+      const newBooking = new Booking({
+        personInfo,
+        bookingInfo,
+        hallInfo,
+        totalPayment,
+      });
 
-      return res.status(200).json({ data: savedData });
+      const savedBooking = await newBooking.save();
+      res.status(201).json({ data: savedBooking });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message });
     }
   },
 
+  // Cập nhật booking theo ID
   updateBookingByID: async (req, res) => {
     try {
-      const booking = await Booking.findById(req.params.id);
-      await booking.updateOne({ $set: req.body });
+      const updatedData = { ...req.body, updated_at: new Date() };
 
-      res.status(200).json("Updated successfully!");
+      const updatedBooking = await Booking.findByIdAndUpdate(
+        req.params.id,
+        { $set: updatedData },
+        { new: true }
+      );
+
+      if (!updatedBooking) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+
+      res
+        .status(200)
+        .json({ message: "Updated successfully!", data: updatedBooking });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message });
     }
   },
 
+  // Xóa booking theo ID
   deleteBookingByID: async (req, res) => {
     try {
-      await Booking.findByIdAndDelete(req.params.id);
-      res.status(200).json("Deleted successfully!");
+      const deletedBooking = await Booking.findByIdAndRemove(req.params.id);
+      if (!deletedBooking) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+
+      res.status(200).json({ message: "Deleted successfully!" });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      res.status(500).json({ message: error.message });
+    }
+  },
+
+  // Lọc booking theo billiard_hall_id
+  filterBookingsByBilliardHallId: async (req, res) => {
+    try {
+      const { hall_id } = req.params;
+
+      const bookings = await Booking.find({
+        "hallInfo.hall_id": hall_id,
+      }).populate("hallInfo.hall_id");
+
+      if (!bookings || bookings.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "No bookings found for this billiard hall" });
+      }
+
+      res.status(200).json({ data: bookings });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
     }
   },
 };
 
-module.exports = bookingController;
+module.exports = bookingsController;

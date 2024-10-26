@@ -51,7 +51,7 @@ class UserAPI {
 
     var response = await http.put(
       Uri.parse(
-          '$USER_API_URL/$id'), // Assuming the API supports updating by ID
+          '$USER_API_URL/$id'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(reqBody),
     );
@@ -64,6 +64,15 @@ class UserAPI {
       Uri.parse('$USER_API_URL/$id'),
       headers: {"Content-Type": "application/json"},
     );
+    return response;
+  }
+
+  static Future<http.Response> getUserByPhoneRequest(String phone) async {
+    var response = await http.get(
+      Uri.parse('$USER_API_URL/phone/$phone'),
+      headers: {"Content-Type": "application/json"},
+    );
+
     return response;
   }
 }

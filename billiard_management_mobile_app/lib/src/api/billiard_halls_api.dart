@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import '../config.dart';
 
 class BilliardHallAPI {
-  // Lấy tất cả các billiard halls
   static Future<http.Response> getAllBilliardHallsRequest() async {
     var response = await http.get(
       Uri.parse(BILLIARD_HALL_API_URL),
@@ -14,7 +13,6 @@ class BilliardHallAPI {
     return response;
   }
 
-  // Lấy các billiard halls có rating cao (4 sao trở lên)
   static Future<http.Response> getHighRatingBilliardHallsRequest() async {
     var response = await http.get(
       Uri.parse('$BILLIARD_HALL_API_URL/high_rating'),
@@ -24,7 +22,6 @@ class BilliardHallAPI {
     return response;
   }
 
-  // Lấy các billiard halls có độ phổ biến cao (popular từ 60 trở lên)
   static Future<http.Response> getHighPopularBilliardHallsRequest() async {
     var response = await http.get(
       Uri.parse('$BILLIARD_HALL_API_URL/high_popular'),
@@ -34,7 +31,6 @@ class BilliardHallAPI {
     return response;
   }
 
-  // Lấy thông tin một billiard hall theo ID
   static Future<http.Response> getBilliardHallByIDRequest(String id) async {
     var response = await http.get(
       Uri.parse('$BILLIARD_HALL_API_URL/$id'),
@@ -44,87 +40,57 @@ class BilliardHallAPI {
     return response;
   }
 
-  // Thêm mới một billiard hall
-  static Future<http.Response> addBilliardHallRequest(
-      String name,
-      String longitude,
-      String latitude,
-      double rating,
-      Map<String, String> address,
-      double pricePerHour,
-      String vibeShortDescription,
-      int popular, // Thêm trường popular
-      String typeHalls, // Thêm trường type_halls
-      ) async {
+  static Future<http.Response> searchBilliardHallsRequest({
+    String? name,
+    String? city,
+    String? district,
+    String? street,
+  }) async {
+    String queryParams = '';
 
-    var reqBody = {
-      "name": name,
-      "longitude": longitude,
-      "latitude": latitude,
-      "rating": rating,
-      "address": {
-        "street": address["street"],
-        "district": address["district"],
-        "city": address["city"],
-      },
-      "price_per_hour": pricePerHour,
-      "vibe_short_description": vibeShortDescription,
-      "popular": popular, // Thêm popular
-      "type_halls": typeHalls, // Thêm type_halls
-    };
+    if (name != null) {
+      queryParams += 'name=${Uri.encodeComponent(name)}&';
+    }
+    if (city != null) {
+      queryParams += 'city=${Uri.encodeComponent(city)}&';
+    }
+    if (district != null) {
+      queryParams += 'district=${Uri.encodeComponent(district)}&';
+    }
+    if (street != null) {
+      queryParams += 'street=${Uri.encodeComponent(street)}&';
+    }
 
-    var response = await http.post(
-      Uri.parse(BILLIARD_HALL_API_URL),
+    queryParams = queryParams.isNotEmpty
+        ? queryParams.substring(0, queryParams.length - 1)
+        : queryParams;
+
+    var response = await http.get(
+      Uri.parse('$BILLIARD_HALL_API_URL/search?$queryParams'),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode(reqBody),
     );
 
     return response;
   }
 
-  // Cập nhật thông tin billiard hall theo ID
-  static Future<http.Response> updateBilliardHallRequest(
-      String id,
-      String name,
-      String longitude,
-      String latitude,
-      double rating,
-      Map<String, String> address,
-      double pricePerHour,
-      String vibeShortDescription,
-      int popular, // Thêm trường popular
-      String typeHalls, // Thêm trường type_halls
-      ) async {
-
-    var reqBody = {
-      "name": name,
-      "longitude": longitude,
-      "latitude": latitude,
-      "rating": rating,
-      "address": {
-        "street": address["street"],
-        "district": address["district"],
-        "city": address["city"],
-      },
-      "price_per_hour": pricePerHour,
-      "vibe_short_description": vibeShortDescription,
-      "popular": popular, // Thêm popular
-      "type_halls": typeHalls, // Thêm type_halls
-    };
-
-    var response = await http.put(
-      Uri.parse('$BILLIARD_HALL_API_URL/$id'),
+  static Future<http.Response> filterBilliardHallsByTypeRequest(
+      String type) async {
+    var response = await http.get(
+      Uri.parse('$BILLIARD_HALL_API_URL/filter_by_type?type=$type'),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode(reqBody),
     );
 
     return response;
   }
 
-  // Xóa một billiard hall theo ID
-  static Future<http.Response> deleteBilliardHallRequest(String id) async {
-    var response = await http.delete(
-      Uri.parse('$BILLIARD_HALL_API_URL/$id'),
+  static Future<http.Response> getNearbyBilliardHallsRequest({
+    required double latitude,
+    required double longitude,
+    int maxDistance = 5000,
+  }) async {
+    var response = await http.get(
+      Uri.parse(
+          '$BILLIARD_HALL_API_URL/nearby?latitude=$latitude&longitude=$longitude&maxDistance=$maxDistance'),
       headers: {"Content-Type": "application/json"},
     );
 

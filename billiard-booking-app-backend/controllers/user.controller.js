@@ -30,6 +30,18 @@ const userController = {
     }
   },
 
+  getUserByPhone: async (req, res) => {
+    try {
+      const userRes = await User.findOne({ phone: req.params.phone });
+      if (!userRes) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.status(200).json({ data: userRes });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+
   getUserByID: async (req, res) => {
     try {
       const userRes = await User.findById(req.params.id);

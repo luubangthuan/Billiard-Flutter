@@ -14,9 +14,14 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  http: ^1.1.0
+  http: ^0.13.6
   shared_preferences: ^2.2.2
   jwt_decoder: ^2.0.1
+  geolocator: ^13.0.1
+  flutter_map: ^4.0.0
+  latlong2: ^0.8.1
+  video_player: ^2.5.0
+  youtube_player_flutter: ^8.0.0
 
 dev_dependencies:
   flutter_test:

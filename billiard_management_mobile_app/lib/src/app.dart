@@ -31,13 +31,8 @@ class MyApp extends StatelessWidget {
   Widget _getDefaultPage() {
     if (token != null && JwtDecoder.isExpired(token) == false) {
       late String role;
-      // giải mã token
       Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(token);
-      // kiểm tra quyền trước khi chuyển trang
       role = jwtDecodedToken['role'];
-      if (role == "admin" || role == "staff") {
-        return AdminHomePage(token: token);
-      }
       return ClientHomePage(token: token);
     } else {
       return const LoginPage();
@@ -83,18 +78,10 @@ class MyApp extends StatelessWidget {
                     return const SignUpPage();
                   case ClientHomePage.routeName:
                     return ClientHomePage(token: token);
-                  case ClientBookingListView.routeName:
-                    return ClientBookingListView(token: token);
-                  case AdminHomePage.routeName:
-                    return AdminHomePage(token: token);
-                  // case AdminTableListView.routeName:
-                  //   return AdminTableListView(token: token);
                   case AdminFoodListView.routeName:
                     return const AdminFoodListView();
                   case AdminUserListView.routeName:
                     return const AdminUserListView();
-                  case AdminBookingListView.routeName:
-                    return const AdminBookingListView();
                   default:
                     return _getDefaultPage();
                 }

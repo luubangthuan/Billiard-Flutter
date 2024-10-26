@@ -35,11 +35,18 @@ class _LoginPageState extends State<LoginPage> {
     prefs = await SharedPreferences.getInstance();
   }
 
+  Future<void> _saveUserInfo(
+      String token, Map<String, dynamic> userInfo) async {
+    await prefs.setString('token', token);
+    await prefs.setString('user_info', jsonEncode(userInfo));
+  }
+
   void _login() async {
     final phone = _phoneController.text;
     final password = _passwordController.text;
 
-    if (_phoneController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
+    if (_phoneController.text.isNotEmpty &&
+        _passwordController.text.isNotEmpty) {
       var response = await UserAPI.loginRequest(phone, password);
 
       if (response.statusCode == 200) {
@@ -50,17 +57,17 @@ class _LoginPageState extends State<LoginPage> {
         Map<String, dynamic> jwtDecodedToken = JwtDecoder.decode(myToken);
 
         role = jwtDecodedToken['role'];
-        if (role == "admin" || role == "staff") {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AdminHomePage(token: myToken)),
-          );
-        } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => ClientHomePage(token: myToken)),
-          );
-        }
+
+        Map<String, dynamic> userInfo = {'phone': phone, 'role': role};
+
+        // Lưu thông tin vào SharedPreferences
+        await _saveUserInfo(myToken, userInfo);
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => ClientHomePage(token: myToken)),
+        );
       } else {
         CustomDialog.showErrorDialog(context, 'Something went wrong');
       }
@@ -76,14 +83,15 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(
         title: const Text(
           'Đăng nhập',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black), // Màu đen
+          style: TextStyle(
+              fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
         ),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Colors.transparent, // Không có màu nền cho AppBar
+        backgroundColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.orange), // Icon màu cam
+            icon: const Icon(Icons.settings, color: Colors.orange),
             onPressed: () {
               Navigator.restorablePushNamed(context, SettingsView.routeName);
             },
@@ -92,19 +100,19 @@ class _LoginPageState extends State<LoginPage> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0), // Padding dọc và ngang
+          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 40), // Thêm khoảng trống
+              const SizedBox(height: 40),
               const Text(
                 'Chào mừng trở lại!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black, // Màu đen giống Home
+                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 40),
@@ -112,12 +120,13 @@ class _LoginPageState extends State<LoginPage> {
                 controller: _phoneController,
                 decoration: InputDecoration(
                   labelText: 'Số điện thoại',
-                  prefixIcon: Icon(Icons.phone, color: Colors.orange), // Icon màu cam
+                  prefixIcon: Icon(Icons.phone, color: Colors.orange),
+                  // Icon màu cam
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12), // Góc bo tròn
-                    borderSide: BorderSide.none, // Loại bỏ đường viền
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
@@ -126,7 +135,8 @@ class _LoginPageState extends State<LoginPage> {
                 controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: 'Mật khẩu',
-                  prefixIcon: Icon(Icons.lock, color: Colors.orange), // Icon màu cam
+                  prefixIcon: Icon(Icons.lock, color: Colors.orange),
+                  // Icon màu cam
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -134,7 +144,7 @@ class _LoginPageState extends State<LoginPage> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                obscureText: true, // Mật khẩu bị ẩn
+                obscureText: true,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -144,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  backgroundColor: Colors.orange, // Màu nền nút cam
+                  backgroundColor: Colors.orange,
                 ),
                 child: const Text(
                   'Đăng nhập',
@@ -159,8 +169,8 @@ class _LoginPageState extends State<LoginPage> {
                 child: const Text(
                   'Đăng ký tài khoản mới',
                   style: TextStyle(
-                    color: Colors.orange, // Text màu cam
-                    decoration: TextDecoration.underline, // Gạch chân
+                    color: Colors.orange,
+                    decoration: TextDecoration.underline,
                   ),
                 ),
               ),
